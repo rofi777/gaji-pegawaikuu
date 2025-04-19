@@ -1,0 +1,260 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aplikasi Gaji Pegawai</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background-color: #f4f6f8;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-top: 15px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    .logout-btn {
+      background-color: #ef4444;
+      margin-top: 10px;
+    }
+    #result, #formGaji, #riwayat, #adminPanel {
+      margin-top: 20px;
+      display: none;
+    }
+    .card {
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Gaji Pegawai</h1>
+
+  <div id="loginForm">
+    <h2>Login</h2>
+    <label>Nama Pegawai</label>
+    <input type="text" id="loginNama" />
+
+    <label>PIN</label>
+    <input type="password" id="loginPin" />
+
+    <button onclick="login()">Login</button>
+    <div id="loginStatus" style="color:red; margin-top:10px;"></div>
+  </div>
+
+  <div id="formGaji">
+    <h2>Form Gaji</h2>
+
+    <label>Jam Masuk (HH:MM)</label>
+    <input type="time" id="jamMasuk" />
+
+    <label>Gaji Pokok</label>
+    <input type="number" id="gajiPokok" />
+
+    <label>Tunjangan Bulanan</label>
+    <input type="number" id="tunjangan" />
+
+    <label>Bonus Bulanan</label>
+    <input type="number" id="bonus" />
+
+    <label>Potongan Hutang</label>
+    <input type="number" id="potonganHutang" />
+
+    <label>Potongan per Jam Telat</label>
+    <input type="number" id="potonganPerJamTelat" />
+
+    <button onclick="hitungGaji()">Hitung Gaji</button>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+
+    <div class="card" id="result"></div>
+  </div>
+
+  <div id="riwayat">
+    <h2>Riwayat</h2>
+    <ul id="logList"></ul>
+  </div>
+
+  <div id="adminPanel">
+    <h2>Admin Panel</h2>
+
+    <label>Nama Pegawai Baru</label>
+    <input type="text" id="newNama" />
+
+    <label>PIN Baru</label>
+    <input type="text" id="newPin" />
+
+    <button onclick="tambahPegawai()">Tambah / Update Pegawai</button>
+
+    <div class="card">
+      <h3>Daftar Pegawai</h3>
+      <ul id="userList"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  let users = [
+    { nama: "Andi", pin: "1234" },
+    { nama: "Budi", pin: "5678" },
+    { nama: "Citra", pin: "4321" },
+    { nama: "Admin", pin: "admin" }
+  ];
+
+  let currentUser = "";
+  let riwayatGaji = [];
+
+  function login() {
+    const nama = document.getElementById('loginNama').value;
+    const pin = document.getElementById('loginPin').value;
+
+    const user = users.find(u => u.nama === nama && u.pin === pin);
+    if (user) {
+      currentUser = nama;
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('formGaji').style.display = 'block';
+      document.getElementById('riwayat').style.display = 'block';
+      if (nama === "Admin") {
+        document.getElementById('adminPanel').style.display = 'block';
+        tampilkanUser();
+      }
+      document.getElementById('loginStatus').innerText = "";
+    } else {
+      document.getElementById('loginStatus').innerText = "Nama atau PIN salah!";
+    }
+  }
+
+  function logout() {
+    currentUser = "";
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('formGaji').style.display = 'none';
+    document.getElementById('result').style.display = 'none';
+    document.getElementById('riwayat').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'none';
+    document.getElementById('loginNama').value = "";
+    document.getElementById('loginPin').value = "";
+    document.getElementById('logList').innerHTML = "";
+  }
+
+  function hitungGaji() {
+    const jamMasuk = document.getElementById('jamMasuk').value;
+    const gajiPokok = parseInt(document.getElementById('gajiPokok').value) || 0;
+    const tunjangan = parseInt(document.getElementById('tunjangan').value) || 0;
+    const bonus = parseInt(document.getElementById('bonus').value) || 0;
+    const potonganHutang = parseInt(document.getElementById('potonganHutang').value) || 0;
+    const potonganPerJamTelat = parseInt(document.getElementById('potonganPerJamTelat').value) || 0;
+
+    const jamStandar = new Date("2000-01-01T08:00:00");
+    const jamMasukPegawai = new Date("2000-01-01T" + jamMasuk + ":00");
+
+    let selisihJam = 0;
+    if (jamMasukPegawai > jamStandar) {
+      const selisihMs = jamMasukPegawai - jamStandar;
+      selisihJam = Math.floor(selisihMs / (1000 * 60 * 60));
+    }
+
+    const potonganTelat = selisihJam * potonganPerJamTelat;
+    const totalGaji = gajiPokok + tunjangan + bonus - potonganHutang - potonganTelat;
+
+    const hasil = `
+      <p><strong>Nama:</strong> ${currentUser}</p>
+      <p><strong>Telat:</strong> ${selisihJam} jam</p>
+      <p><strong>Potongan Telat:</strong> Rp ${potonganTelat.toLocaleString()}</p>
+      <p><strong>Total Gaji:</strong> Rp ${totalGaji.toLocaleString()}</p>
+    `;
+
+    document.getElementById('result').style.display = "block";
+    document.getElementById('result').innerHTML = hasil;
+
+    riwayatGaji.push(hasil);
+    tampilkanRiwayat();
+  }
+
+  function tampilkanRiwayat() {
+    const logList = document.getElementById('logList');
+    logList.innerHTML = "";
+    riwayatGaji.forEach(item => {
+      const li = document.createElement("li");
+      li.innerHTML = item;
+      logList.appendChild(li);
+    });
+  }
+
+  function tambahPegawai() {
+    const namaBaru = document.getElementById('newNama').value;
+    const pinBaru = document.getElementById('newPin').value;
+    if (!namaBaru || !pinBaru) return alert("Isi nama dan PIN!");
+
+    const index = users.findIndex(u => u.nama === namaBaru);
+    if (index >= 0) {
+      users[index].pin = pinBaru;
+      alert("PIN Pegawai diperbarui!");
+    } else {
+      users.push({ nama: namaBaru, pin: pinBaru });
+      alert("Pegawai baru ditambahkan!");
+    }
+    tampilkanUser();
+    document.getElementById('newNama').value = "";
+    document.getElementById('newPin').value = "";
+  }
+
+  function tampilkanUser() {
+    const userList = document.getElementById('userList');
+    userList.innerHTML = "";
+    users.forEach(u => {
+      const li = document.createElement("li");
+      li.textContent = `${u.nama} (PIN: ${u.pin})`;
+      userList.appendChild(li);
+    });
+  }
+</script>
+
+</body>
+</html>
